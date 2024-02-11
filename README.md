@@ -1,0 +1,1 @@
+# Smart-Sound-to-Speech-Interpreter-for-Security-and-Notification-Systems
