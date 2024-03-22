@@ -32,3 +32,4 @@ if __name__ == "__main__":
     audio_data = record_audio(duration, sample_rate, channels)
     # Performing sound recognition on the recorded audio
     recognize_sound(audio_data)
+
