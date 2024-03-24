@@ -21,5 +21,5 @@ This project involves creating a smart interpreter system that converts specific
 - Familiarity with accessibility considerations in technology design, particularly for auditory information processing.
 
 ## Usage
-- Run the main script using `python sound_interpreter.py`
+- Run the main script using `python sound_recognition.py`
 - Follow the on-screen instructions to record and interpret sounds.
