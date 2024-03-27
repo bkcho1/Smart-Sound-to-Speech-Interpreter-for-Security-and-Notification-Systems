@@ -78,12 +78,12 @@ def delete_sound(sound_id):
 if __name__ == "__main__":
     # Example usage: Insert sound files
     file_paths = ['sounds/sound1.wav', 'sounds/sound2.wav', 'sounds/sound3.wav']
-    insert_sounds(file_paths)
+    # insert_sounds(file_paths)
 
     # Example usage: Fetch all sound files
-    sounds = fetch_sounds()
-    for sound in sounds:
-        print(f"Sound ID: {sound.id}")
+    # sounds = fetch_sounds()
+    # for sound in sounds:
+    #     print(f"Sound ID: {sound.id}")
 
     # Example usage: Delete a sound file (replace sound_id with the actual ID)
     sound_id = 1
