@@ -23,3 +23,9 @@ This project involves creating a smart interpreter system that converts specific
 ## Usage
 - Run the main script using `python sound_recognition.py`
 - Follow the on-screen instructions to record and interpret sounds.
+
+
+## Interact with the database as of now
+- Added a terminal interactive functionality where you can insert, fetch and delete sound files form the database
+- Right now you'll need to see the database to know the sound id or fetch sound id to delete it
+- Run the script using `python connect.py`

@@ -7,7 +7,7 @@ class Base(DeclarativeBase):
 
 # sound file table
 class Sound(Base):
-    __tablename__ = 'sounds'
+    __tablename__ = 'sound'
     id = Column(Integer, primary_key=True)
     file = Column(LargeBinary, nullable=False)
 
@@ -25,3 +25,10 @@ class Fingerprint(Base):
     sound_id = Column(Integer,ForeignKey('sound.id'),unique=True,nullable=False)
     offset = Column(Integer,unique=True)
 
+    # # code to insert recorded sound into the database
+    # def insert_sound(file_path):
+    #     with open(file_path, 'rb') as file:
+    #         sound_data = file.read()
+    #     sound = Sound(file=sound_data)
+    #     session.add(sound)
+    #     session.commit()
