@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base, Sound, Message
-from config import DATABASE_URI
+from config import DATABASE_URI, DEV_MODE
 
 # Create a SQLAlchemy engine
-engine = create_engine(DATABASE_URI, echo=False)
+engine = create_engine(DATABASE_URI, echo=DEV_MODE)
 Base.metadata.create_all(bind=engine)
 
 # Create a sessionmaker to interact with the database

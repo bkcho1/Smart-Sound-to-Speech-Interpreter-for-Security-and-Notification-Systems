@@ -1,5 +1,6 @@
 from connect import insert, fetch, update, delete_sound
 from config import SOUNDS
+from sound_recognition import create_spectrogram
 import os
 
 # Demo usage
@@ -11,6 +12,7 @@ if __name__ == "__main__":
             print("2. Fetch data")
             print("3. Update an entry")
             print("4. Delete an entry")
+            print("5. Show spectrogram")
             print("0. Exit")
 
             choice = input("Enter your choice: ")
@@ -37,6 +39,11 @@ if __name__ == "__main__":
             elif choice == "4":
                 sound_id = input("Enter sound ID to delete: ")
                 delete_sound(sound_id)
+            elif choice == "5":
+                print("Available sound files:", end=" ")
+                print(os.listdir(SOUNDS))
+                file_name = input("Please choose a file: ")
+                create_spectrogram(file_name)
             elif choice == "0":
                 break
             else:
