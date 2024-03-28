@@ -1,5 +1,5 @@
 from sqlalchemy import *
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, relationship
 
 # boilerplate, needed for other classes
 class Base(DeclarativeBase):
@@ -7,22 +7,26 @@ class Base(DeclarativeBase):
 
 # sound file table
 class Sound(Base):
-    __tablename__ = 'sound'
+    __tablename__ = 'sounds'
     id = Column(Integer, primary_key=True)
+    file_name = Column(String, unique=True, nullable=False)
     file = Column(LargeBinary, nullable=False)
+
+    messages = relationship('Message',cascade='all, delete-orphan')
+    fingerprints = relationship('Fingerprint',cascade='all, delete-orphan')
 
 # text message table
 class Message(Base):
     __tablename__ = 'messages'
     id = Column(Integer,primary_key=True)
     text = Column(String,nullable=False)
-    sound_id = Column(Integer,ForeignKey('sound.id'),unique=True,nullable=False)
+    sound_id = Column(Integer,ForeignKey('sounds.id'),unique=True,nullable=False)
 
 # acoustic fingerprint table
 class Fingerprint(Base):
     __tablename__ = 'fingerprints'
     hash = Column(BINARY(10),primary_key=True,nullable=False,index=True,unique=True)
-    sound_id = Column(Integer,ForeignKey('sound.id'),unique=True,nullable=False)
+    sound_id = Column(Integer,ForeignKey('sounds.id'),unique=True,nullable=False)
     offset = Column(Integer,unique=True)
 
     # # code to insert recorded sound into the database
