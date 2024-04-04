@@ -19,11 +19,13 @@ def create_spectrogram(file):
 
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
 
-    plt.pcolormesh(times, frequencies, spectrogram)
-    plt.imshow(spectrogram)
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
-    plt.show()  
+    #plt.pcolormesh(times, frequencies, spectrogram)
+    #plt.imshow(spectrogram)
+    #plt.ylabel('Frequency [Hz]')
+    #plt.xlabel('Time [sec]')
+    #plt.show()
+    
+    return spectrogram
 
 # Function to perform sound recognition
 def recognize_sound(audio_data):
