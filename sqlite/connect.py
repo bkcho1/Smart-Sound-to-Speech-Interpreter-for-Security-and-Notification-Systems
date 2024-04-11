@@ -1,7 +1,6 @@
-import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Sound, Message
+from sqlite.models import Base, Sound, Message
 from config import DATABASE_URI, DEV_MODE
 
 # Create a SQLAlchemy engine
@@ -10,19 +9,13 @@ Base.metadata.create_all(bind=engine)
 
 # Create a sessionmaker to interact with the database
 Session = sessionmaker(bind=engine)
-
-# Hash Function to calculate SHA-1 hash of data
-def calculate_hash(data):
-    sha1_hash = hashlib.sha1()
-    sha1_hash.update(data)
-    return sha1_hash.digest()
     
 def insert(name, data, message):
     # Create a session
     session = Session()
 
     try:
-        # check if sound file already ecists in database
+        # check if sound file already exists in database
         if session.query(Sound).filter_by(file_name=name).first() is None:
             new_sound = Sound(file_name=name,file=data)
             session.add(new_sound)
@@ -33,7 +26,7 @@ def insert(name, data, message):
             session.add(new_message)
             session.commit()
             print("Message inserted successfully.")
-            print("Sound hash:", sound_hash.hex())
+            #print("Sound hash:", sound_hash.hex())
         else:
             print('Error: file already is in database')
     except Exception as e:

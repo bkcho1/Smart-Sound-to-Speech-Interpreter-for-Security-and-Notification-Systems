@@ -1,6 +1,7 @@
-from connect import insert, fetch, update, delete_sound
+from sqlite.connect import insert, fetch, update, delete_sound
 from config import SOUNDS
-from sound_recognition import create_spectrogram
+from logic.sound_recognition import fingerprint
+from logic.file_utils import read
 import os
 
 # Demo usage
@@ -43,7 +44,9 @@ if __name__ == "__main__":
                 print("Available sound files:", end=" ")
                 print(os.listdir(SOUNDS))
                 file_name = input("Please choose a file: ")
-                create_spectrogram(file_name)
+                data = read(file_name)
+                x = fingerprint(data)
+                print(tuple(x))
             elif choice == "0":
                 break
             else:
