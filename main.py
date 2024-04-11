@@ -14,8 +14,6 @@ if __name__ == "__main__":
             print("3. Update an entry")
             print("4. Delete an entry")
             print("5. Show spectrogram")
-            print("6. Find and Show Local Maxima in Spectrogram")
-            print("7. Show Local Maxima analysis between two sound files")
             print("0. Exit")
 
             choice = input("Enter your choice: ")
