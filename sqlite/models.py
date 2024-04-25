@@ -25,9 +25,12 @@ class Message(Base):
 # acoustic fingerprint table
 class Fingerprint(Base):
     __tablename__ = 'fingerprints'
-    hash = Column(BINARY(10),primary_key=True,nullable=False,index=True,unique=True)
-    sound_id = Column(Integer,ForeignKey('sounds.id'),unique=True,nullable=False)
-    offset = Column(Integer,unique=True)
+    __table_args__ = (
+        PrimaryKeyConstraint('hash', 'sound_id', 'offset'),
+    )
+    hash = Column(BINARY(10),nullable=False,index=True)
+    sound_id = Column(Integer,ForeignKey('sounds.id'),nullable=False)
+    offset = Column(Integer)
 
     # # code to insert recorded sound into the database
     # def insert_sound(file_path):
