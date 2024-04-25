@@ -10,6 +10,8 @@ DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 # directory of sound files
 SOUNDS = os.path.dirname(os.path.realpath(__file__)) + '/sounds'
 
+TEST = os.path.dirname(os.path.realpath(__file__)) + '/test'
+
 # handle to the database
 DATABASE_URI = 'sqlite+pysqlite:///' + DIRECTORY + '/sounds-and-messages.db'
 

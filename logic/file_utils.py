@@ -1,8 +1,8 @@
 from scipy.io import wavfile
 from config import SOUNDS
 
-def read(file):
-    _, samples = wavfile.read(SOUNDS + '/' + file)
+def read(file, location):
+    _, samples = wavfile.read(location + '/' + file)
     
     return samples
 

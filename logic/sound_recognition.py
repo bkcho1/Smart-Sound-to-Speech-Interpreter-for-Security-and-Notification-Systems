@@ -4,8 +4,8 @@ from logic.file_utils import read
 from logic.fingerprint import fingerprint
 from sqlite.connect import match, get
 
-def recognize(file_name):
-    data = read(file_name)
+def recognize(file_name, directory):
+    data = read(file_name, directory)
 
     hashes = set()
 
