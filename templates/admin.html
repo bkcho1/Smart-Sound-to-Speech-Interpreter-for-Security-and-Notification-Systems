@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Sound Interpreter</title>
+    <link rel="stylesheet" href="/static/style.css"> <!-- Link to CSS for styling -->
+    <script>
+        async function insertEntry() {
+            const formData = new FormData();
+            formData.append('file_name', document.getElementById('insert_file_name').value);
+            formData.append('message', document.getElementById('insert_message').value);
+            const response = await fetch('/insert', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+            fetchEntries();
+        }
+
+        async function fetchEntries() {
+            const response = await fetch('/fetch');
+            const data = await response.json();
+            let logHtml = '<ul>';
+            data.forEach(entry => {
+                logHtml += `<li><strong>ID:</strong> ${entry['ID']}, <strong>File:</strong> ${entry['File Name']}, <strong>Message:</strong> ${entry['Message']}</li>`;
+            });
+            logHtml += '</ul>';
+            document.getElementById('log').innerHTML = logHtml;
+        }
+
+        async function updateEntry() {
+            const formData = new FormData();
+            formData.append('sound_id', document.getElementById('update_sound_id').value);
+            formData.append('new_message', document.getElementById('update_message').value);
+            const response = await fetch('/update', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+            fetchEntries();
+        }
+
+        async function deleteEntry() {
+            const formData = new FormData();
+            formData.append('sound_id', document.getElementById('delete_sound_id').value);
+            const response = await fetch('/delete', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+            fetchEntries();
+        }
+
+        async function recognizeSound() {
+            const formData = new FormData();
+            formData.append('file_name', document.getElementById('recognize_file_name').value);
+            const response = await fetch('/recognize', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+        }
+
+        window.onload = fetchEntries;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Panel - Sound Interpreter</h1>
+
+        <form>
+            <h2>Insert Entry</h2>
+            <label for="insert_file_name">File Name</label>
+            <input type="text" id="insert_file_name" placeholder="Enter file name">
+            <label for="insert_message">Message</label>
+            <input type="text" id="insert_message" placeholder="Enter message">
+            <button type="button" onclick="insertEntry()">Insert</button>
+        </form>
+
+        <form>
+            <h2>Update Entry</h2>
+            <label for="update_sound_id">Sound ID</label>
+            <input type="text" id="update_sound_id" placeholder="Enter sound ID">
+            <label for="update_message">New Message</label>
+            <input type="text" id="update_message" placeholder="Enter new message">
+            <button type="button" onclick="updateEntry()">Update</button>
+        </form>
+
+        <form>
+            <h2>Delete Entry</h2>
+            <label for="delete_sound_id">Sound ID</label>
+            <input type="text" id="delete_sound_id" placeholder="Enter sound ID">
+            <button type="button" onclick="deleteEntry()">Delete</button>
+        </form>
+
+        <form>
+            <h2>Recognize Sound</h2>
+            <label for="recognize_file_name">File Name</label>
+            <input type="text" id="recognize_file_name" placeholder="Enter file name">
+            <button type="button" onclick="recognizeSound()">Recognize</button>
+        </form>
+
+        <h2 style="padding: 10px; border-radius: 7px; text-align: center; background-color: black; color: white; max-width: 400px;     margin-left: auto;
+    margin-right: auto;">Log</h2>
+        <div id="log"></div>
+    </div>
+</body>
+</html>

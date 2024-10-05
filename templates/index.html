@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Sound to Speech Interpreter</title>
+    <link rel="stylesheet" href="/static/style.css">  <!-- Link to CSS -->
+    <script>
+        // Function to start recording by calling the API
+        async function startRecording() {
+            document.getElementById('status').innerText = "Recording for 10 seconds...";
+            const response = await fetch('/record', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            document.getElementById('status').innerText = "Recording Complete: " + result.message;
+            updateLog();
+        }
+
+        // Function to update the log from the backend
+        async function updateLog() {
+            const response = await fetch('/log');
+            const logData = await response.json();
+            let logHtml = '<ul>';
+            logData.forEach(entry => {
+                logHtml += `<li>${entry['File Name']} - ${entry['Message']} (ID: ${entry['ID']}, Time: ${new Date().toLocaleString()})</li>`;
+            });
+            logHtml += '</ul>';
+            document.getElementById('log').innerHTML = logHtml;
+        }
+
+        window.onload = updateLog;
+    </script>
+</head>
+<body>
+    <h1>Smart Sound to Speech Interpreter</h1>
+    <button onclick="startRecording()">Start Recording</button>
+    <p id="status"></p>
+    <h2>Sound Log</h2>
+    <div id="log"></div>
+</body>
+</html>

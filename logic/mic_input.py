@@ -3,7 +3,7 @@ import soundfile as sf
 import os
 from datetime import datetime
 
-duration = 5  # Duration of recording in secs
+duration = 10  # Duration of recording in secs
 sample_rate = 44100  # Standard sample rate for audio (44.1 kHz)
 channels = 2  # Stereo
 
