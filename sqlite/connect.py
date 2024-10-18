@@ -25,23 +25,21 @@ def insert(name, data, message):
             session.add(new_sound)
             session.commit()
 
-            print(new_sound.id)
             new_message = Message(text=message, sound_id=new_sound.id)
             session.add(new_message)
             session.commit()
 
+            hashes = []
             for i in range(data.ndim):
-                hashes = fingerprint(data[:,i])
-                #print(tuple(hashes))
-                for hash in hashes:
-                    new_fingerprint = Fingerprint(hash=bytes.fromhex(hash[0]), sound_id=new_sound.id, offset=int(hash[1]))
-                    session.add(new_fingerprint)
-                    try:
-                        session.commit()
-                    except IntegrityError:
-                        session.rollback()
+                hashes += fingerprint(data[:,i])
+            for hash in hashes:
+                new_fingerprint = Fingerprint(hash=bytes.fromhex(hash[0]), sound_id=new_sound.id, offset=int(hash[1]))
+                session.add(new_fingerprint)
+                try:
+                    session.commit()
+                except IntegrityError:
+                    session.rollback()
             print("Insertion successfully")
-
             
         else:
             print('Error: file already is in database')
@@ -51,7 +49,19 @@ def insert(name, data, message):
     finally:
         session.close()
 
-def fetch():
+def fetch_message(sound_id):
+    session = Session()
+
+    try:
+        message = session.query(Message).filter(Message.sound_id == sound_id).first()
+    except Exception as e:
+        print(f"Error fetching file: {e}")
+    finally:
+        session.close()
+
+    return message.text
+
+def fetch_all():
     # Create a session
     session = Session()
 
@@ -132,3 +142,14 @@ def match(hashes):
     session.close()
 
     return matches, countDict
+
+def get_fingerprint_count(sound_id):
+    session = Session()
+    try:
+        fingerprints = session.query(Fingerprint).filter(Fingerprint.sound_id == sound_id).all()
+    except Exception as e:
+        print(f"Error fetching file: {e}")
+    finally:
+        session.close()
+
+    return len(fingerprints)

@@ -1,4 +1,4 @@
-from sqlite.connect import insert, fetch, update, delete_sound
+from sqlite.connect import insert, fetch_message, fetch_all, update, delete_sound
 from config import SOUNDS, TEST
 from logic.file_utils import read
 from logic.sound_recognition import recognize
@@ -26,7 +26,7 @@ if __name__ == "__main__":
                 data = read(file_name, SOUNDS)
                 insert(file_name, data, message)
             elif choice == "2":
-                list = fetch()
+                list = fetch_all()
                 if list:
                     for info in list:
                         print("Entry has name " + info["File Name"] + " with an ID of " + info["ID"] + " and has message " + '"' + info["Message"] + '".')
@@ -43,8 +43,12 @@ if __name__ == "__main__":
                 print("Available sound files:", end=" ")
                 print(os.listdir(TEST))
                 file_name = input("Please choose a file: ")
-                file_name = recognize(file_name, TEST)
-                print("Predicted file is " + file_name)
+                status, sound_id, output = recognize(file_name, TEST)
+                if status == -1:
+                    print(output)
+                else:
+                    message = fetch_message(sound_id)
+                    print("Predicted file is " + output + " and has message: \"" + message + "\"")
             elif choice == "0":
                 break
             else:

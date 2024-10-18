@@ -28,7 +28,7 @@ class Fingerprint(Base):
     __table_args__ = (
         PrimaryKeyConstraint('hash', 'sound_id', 'offset'),
     )
-    hash = Column(BINARY(10),nullable=False,index=True)
+    hash = Column(BINARY(10),nullable=False,unique=True,index=True)
     sound_id = Column(Integer,ForeignKey('sounds.id'),nullable=False)
     offset = Column(Integer)
 

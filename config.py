@@ -2,8 +2,7 @@ import os
 
 DEV_MODE = True
 
-SHOW = True
-
+SHOW = False
 # directory of project files
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 

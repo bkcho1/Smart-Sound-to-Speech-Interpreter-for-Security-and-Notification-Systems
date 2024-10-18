@@ -43,6 +43,7 @@ def find_peaks(spec):
     freqs_filter = freqs[filter_idxs]
     times_filter = times[filter_idxs]
 
+    # legacy levaing here just in case
     if(SHOW):
         fig, ax = plt.subplots()
         ax.imshow(spec)
@@ -72,6 +73,8 @@ def generate_hashes(peaks):
                     h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(t_delta)}".encode('utf-8'))
 
                     hashes.append((h.hexdigest()[0:FINGERPRINT_REDUCTION], t1))
+
+    # legacy levaing here just in case
     if(SHOW):
         print(len(hashes))
         print(tuple(hashes))
