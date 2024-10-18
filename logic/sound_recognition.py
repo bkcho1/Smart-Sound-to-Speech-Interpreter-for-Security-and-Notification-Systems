@@ -1,5 +1,4 @@
 # Import necessary libraries
-import soundfile as sf
 from logic.file_utils import read
 from logic.fingerprint import fingerprint
 from sqlite.connect import match, get, get_fingerprint_count

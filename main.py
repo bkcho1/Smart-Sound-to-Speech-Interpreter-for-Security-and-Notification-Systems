@@ -2,6 +2,7 @@ from sqlite.connect import insert, fetch_message, fetch_all, update, delete_soun
 from config import SOUNDS, TEST
 from logic.file_utils import read
 from logic.sound_recognition import recognize
+from logic.sound_IO import play_text
 import os
 
 # Demo usage
@@ -49,6 +50,7 @@ if __name__ == "__main__":
                 else:
                     message = fetch_message(sound_id)
                     print("Predicted file is " + output + " and has message: \"" + message + "\"")
+                    play_text(message)
             elif choice == "0":
                 break
             else:
