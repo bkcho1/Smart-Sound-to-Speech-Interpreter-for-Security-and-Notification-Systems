@@ -15,7 +15,7 @@
                 body: formData
             });
             const result = await response.json();
-            alert(result.message);
+            alert(result.status);
             fetchEntries();
         }
 
@@ -39,7 +39,7 @@
                 body: formData
             });
             const result = await response.json();
-            alert(result.message);
+            alert(result.status);
             fetchEntries();
         }
 
@@ -51,7 +51,7 @@
                 body: formData
             });
             const result = await response.json();
-            alert(result.message);
+            alert(result.status);
             fetchEntries();
         }
 
@@ -64,6 +64,22 @@
             });
             const result = await response.json();
             alert(result.message);
+        }
+
+        async function recordAudio() {
+            document.getElementById('recordingStatus').innerText = "Recording in progress...";
+            
+            const response = await fetch('/record_audio', {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+            if (result.status === 'Recording complete') {
+                document.getElementById('recordingStatus').innerText = `Recording complete. File saved as ${result.filename}`;
+                fetchEntries(); // Refresh log after recording
+            } else {
+                document.getElementById('recordingStatus').innerText = 'Recording failed. Please try again.';
+            }
         }
 
         window.onload = fetchEntries;
@@ -105,8 +121,13 @@
             <button type="button" onclick="recognizeSound()">Recognize</button>
         </form>
 
-        <h2 style="padding: 10px; border-radius: 7px; text-align: center; background-color: black; color: white; max-width: 400px;     margin-left: auto;
-    margin-right: auto;">Log</h2>
+        <form>
+            <h2>Record Audio</h2>
+            <button type="button" onclick="recordAudio()">Record Audio</button>
+            <p id="recordingStatus"></p>
+        </form>
+
+        <h2 style="padding: 10px; border-radius: 7px; text-align: center; background-color: black; color: white; max-width: 400px; margin-left: auto; margin-right: auto;">Log</h2>
         <div id="log"></div>
     </div>
 </body>

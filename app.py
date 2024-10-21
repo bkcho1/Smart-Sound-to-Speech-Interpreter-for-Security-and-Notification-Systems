@@ -1,63 +1,72 @@
-from flask import Flask, jsonify, request, render_template
-from datetime import datetime
-import os
-from logic.mic_input import record_audio
-from logic.sound_recognition import recognize
-from sqlite.connect import fetch, insert, update, delete_sound
+import threading
+import webbrowser
+from flask import Flask, render_template, request, jsonify
+from sqlite.connect import insert, fetch_message, fetch_all, update, delete_sound
 from config import SOUNDS
+from logic.file_utils import read
+from logic.sound_recognition import recognize
+from datetime import datetime
+from logic.sound_IO import record_audio  # Import the record_audio function
+import os
 
 app = Flask(__name__)
 
-# Serve the HTML page for the admin interface
+# Define routes for the web GUI
+
 @app.route('/')
-def admin_panel():
+def home():
     return render_template('admin.html')
 
-# API to insert a new sound entry
 @app.route('/insert', methods=['POST'])
 def insert_entry():
     file_name = request.form['file_name']
     message = request.form['message']
-    
-    # Check if the file exists in the SOUNDS directory
-    file_path = os.path.join(SOUNDS, file_name)
-    if not os.path.exists(file_path):
-        return jsonify({"error": "File not found"}), 404
+    data = read(file_name, SOUNDS)
+    insert(file_name, data, message)
+    return jsonify({'status': 'Entry inserted successfully'})
 
-    with open(file_path, 'rb') as f:
-        sound_data = f.read()
-
-    # Insert the sound file and message into the database
-    insert(file_name, sound_data, message)
-    return jsonify({"message": "Entry inserted successfully!"})
-
-# API to fetch all sound entries
 @app.route('/fetch', methods=['GET'])
 def fetch_entries():
-    data = fetch()  # Fetch data from the database
-    return jsonify(data)
+    entries = fetch_all()
+    return jsonify(entries)
 
-# API to update a sound entry's message
 @app.route('/update', methods=['POST'])
 def update_entry():
     sound_id = request.form['sound_id']
     new_message = request.form['new_message']
     update(sound_id, new_message)
-    return jsonify({"message": "Entry updated successfully!"})
+    return jsonify({'status': 'Entry updated successfully'})
 
-# API to delete a sound entry
 @app.route('/delete', methods=['POST'])
 def delete_entry():
     sound_id = request.form['sound_id']
     delete_sound(sound_id)
-    return jsonify({"message": "Entry deleted successfully!"})
+    return jsonify({'status': 'Entry deleted successfully'})
 
-# API to recognize a sound from a file
 @app.route('/recognize', methods=['POST'])
 def recognize_sound():
     file_name = request.form['file_name']
-    result = recognize(file_name, SOUNDS)
-    return jsonify({"message": f"Recognized sound: {result}"})
+    status, sound_id, output = recognize(file_name, SOUNDS)
+    if status == -1:
+        return jsonify({'status': 'Recognition failed', 'message': output})
+    else:
+        message = fetch_message(sound_id)
+        return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/record_audio', methods=['POST'])
+def record_audio_route():
+    # Create a filename with a timestamp to avoid overwriting files
+    filename = f"mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+    record_audio(filename)
+    return jsonify({'status': 'Recording complete', 'filename': filename})
+
+def open_browser():
+    """Function to open the default web browser after a slight delay."""
+    webbrowser.open_new('http://127.0.0.1:5000/')
+
+if __name__ == "__main__":
+    # Open the browser in a separate thread after a slight delay
+    print("Starting Flask server and opening the web GUI...")
+    threading.Timer(1, open_browser).start()
+    # Run the Flask application
+    app.run(debug=True, use_reloader=False)
