@@ -4,18 +4,11 @@ import os
 from datetime import datetime
 import pyttsx3
 
-duration = 10  # Duration of recording in secs
+duration = 5  # Duration of recording in secs
 sample_rate = 44100  # Standard sample rate for audio (44.1 kHz)
 channels = 2  # Stereo
 
-# The path to save the recorded audio(in "sounds" folder)
-sounds_folder = os.path.join(os.path.dirname(__file__), '../sounds')
-
-# Ensure sounds directory exists
-if not os.path.exists(sounds_folder):
-    os.makedirs(sounds_folder)
-
-def record_audio(filename):
+def record_audio(filename, directory):
     print(f"Recording audio for {duration} seconds...")
 
     # Record audio using "sounddevice"
@@ -25,7 +18,7 @@ def record_audio(filename):
     print("Recording complete.")
 
     # Full path to save the "".wav"
-    file_path = os.path.join(sounds_folder, filename)
+    file_path = os.path.join(directory, filename)
     
     # Save recorded audio as ".wav"
     sf.write(file_path, audio_data, sample_rate)

@@ -7,9 +7,9 @@ SHOW = False
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 # directory of sound files
-SOUNDS = os.path.dirname(os.path.realpath(__file__)) + '/sounds'
+SOUNDS = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sounds')
 
-TEST = os.path.dirname(os.path.realpath(__file__)) + '/test'
+TEST = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test')
 
 # handle to the database
 DATABASE_URI = 'sqlite+pysqlite:///' + DIRECTORY + '/sounds-and-messages.db'
@@ -18,7 +18,7 @@ DEFAULT_FS = 44100
 
 DEFAULT_WINDOW_SIZE = 4096
 
-DEFAULT_FAN_VALUE = 5
+DEFAULT_FAN_VALUE = 15
 
 DEFAULT_OVERLAP_RATIO = 0.5
 

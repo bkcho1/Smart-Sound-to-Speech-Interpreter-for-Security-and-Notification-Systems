@@ -139,6 +139,8 @@ def match(hashes):
     for match in matches:
         countDict[match[0]] = countDict[match[0]] + 1
 
+    print(matches)
+    input()
     session.close()
 
     return matches, countDict
