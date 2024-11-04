@@ -1,47 +1,41 @@
 import sounddevice as sd
 import soundfile as sf
+from config import TEST  # Import TEST path from config.py
 import os
 from datetime import datetime
 import pyttsx3
 
-duration = 10  # Duration of recording in secs
-sample_rate = 44100  # Standard sample rate for audio (44.1 kHz)
+duration = 10  # Duration of recording in seconds
+sample_rate = 44100  # Standard sample rate for audio
 channels = 2  # Stereo
 
-# The path to save the recorded audio(in "sounds" folder)
-sounds_folder = os.path.join(os.path.dirname(__file__), '../sounds')
-
-# Ensure sounds directory exists
-if not os.path.exists(sounds_folder):
-    os.makedirs(sounds_folder)
-
-def record_audio(filename):
+def record_audio(file_path):
     print(f"Recording audio for {duration} seconds...")
 
-    # Record audio using "sounddevice"
+    # Record audio using sounddevice
     audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=channels, dtype='float64')
-    
-    sd.wait()  # Wait until recording is done
+    sd.wait()  # Wait until the recording is complete
     print("Recording complete.")
 
-    # Full path to save the "".wav"
-    file_path = os.path.join(sounds_folder, filename)
-    
-    # Save recorded audio as ".wav"
+    # Ensure the directory for saving exists
+    save_directory = os.path.dirname(file_path)
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+        print(f"Created directory at {save_directory}")
+
+    # Save the audio file
     sf.write(file_path, audio_data, sample_rate)
     print(f"Audio saved to {file_path}")
 
 def play_text(text):
     engine = pyttsx3.init()
-
     engine.setProperty('rate', 150)
     engine.setProperty('volume', 1)
-
     engine.say(text)
-
     engine.runAndWait()
 
 if __name__ == "__main__":
-    # Create filename with a timestamp to avoid any overwriting files :)
-    filename = f"mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-    record_audio(filename)
+    # Test recording directly from sound_IO.py
+    filename = f"test_mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+    file_path = os.path.join(TEST, filename)
+    record_audio(file_path)
