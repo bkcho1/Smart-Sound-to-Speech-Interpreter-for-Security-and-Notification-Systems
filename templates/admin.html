@@ -55,37 +55,80 @@
             fetchEntries();
         }
 
-        async function recognizeSound() {
-            const formData = new FormData();
-            formData.append('file_name', document.getElementById('recognize_file_name').value);
-            const response = await fetch('/recognize', {
-                method: 'POST',
-                body: formData
+        async function fetchTestFiles() {
+            const response = await fetch('/fetch_test_files');
+            const files = await response.json();
+            let fileOptions = '<option value="">Select a file</option>';
+            files.forEach(file => {
+                fileOptions += `<option value="${file}">${file}</option>`;
             });
-            const result = await response.json();
-            alert(result.message);
+            document.getElementById('recognize_file_name').innerHTML = fileOptions;
+        }
+
+        async function recognizeSound() {
+            const fileName = document.getElementById('recognize_file_name').value;
+            if (!fileName) {
+                alert("Please select a file to recognize.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file_name', fileName);
+
+            try {
+                const response = await fetch('/recognize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Check if the response is okay
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+
+                // Speak the message out loud and show the alert simultaneously
+                if (result.status === 'Recognition successful' || result.status === 'Recognition failed') {
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(result.message);
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    alert(result.message); // Show the alert after speech synthesis starts
+                }
+            } catch (error) {
+                console.error('Error during recognition:', error);
+                alert('An error occurred during recognition. Please try again.');
+            }
         }
 
         async function recordAudio() {
             document.getElementById('recordingStatus').innerText = "Recording in progress...";
-            
+
             const response = await fetch('/record_audio', {
                 method: 'POST'
             });
 
             const result = await response.json();
             if (result.status === 'Recording complete') {
-                document.getElementById('recordingStatus').innerText = `Recording complete. File saved as ${result.filename}`;
-                fetchEntries(); // Refresh log after recording
+                document.getElementById('recordingStatus').innerText = `Recording complete. File saved as ${result.filename} in the test folder.`;
             } else {
                 document.getElementById('recordingStatus').innerText = 'Recording failed. Please try again.';
             }
         }
 
-        window.onload = fetchEntries;
+        window.onload = () => {
+            fetchEntries();
+            fetchTestFiles(); // Fetch files from "test" folder for recognition dropdown
+        };
     </script>
 </head>
 <body>
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/logs">Logs</a>
+    </div>
+
     <div class="container">
         <h1>Admin Panel - Sound Interpreter</h1>
 
@@ -116,8 +159,8 @@
 
         <form>
             <h2>Recognize Sound</h2>
-            <label for="recognize_file_name">File Name</label>
-            <input type="text" id="recognize_file_name" placeholder="Enter file name">
+            <label for="recognize_file_name">Select a file from the dropdown</label>
+            <select id="recognize_file_name"></select>
             <button type="button" onclick="recognizeSound()">Recognize</button>
         </form>
 

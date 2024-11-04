@@ -2,11 +2,11 @@ import threading
 import webbrowser
 from flask import Flask, render_template, request, jsonify
 from sqlite.connect import insert, fetch_message, fetch_all, update, delete_sound
-from config import SOUNDS
+from config import SOUNDS, TEST  # Import TEST for the "test" folder path
 from logic.file_utils import read
 from logic.sound_recognition import recognize
 from datetime import datetime
-from logic.sound_IO import record_audio  # Import the record_audio function
+from logic.sound_IO import record_audio, play_text   # Import the record_audio function
 import os
 
 app = Flask(__name__)
@@ -30,6 +30,12 @@ def fetch_entries():
     entries = fetch_all()
     return jsonify(entries)
 
+@app.route('/fetch_test_files', methods=['GET'])
+def fetch_test_files():
+    files = os.listdir(TEST)
+    return jsonify(files)
+
+
 @app.route('/update', methods=['POST'])
 def update_entry():
     sound_id = request.form['sound_id']
@@ -45,20 +51,53 @@ def delete_entry():
 
 @app.route('/recognize', methods=['POST'])
 def recognize_sound():
-    file_name = request.form['file_name']
-    status, sound_id, output = recognize(file_name, SOUNDS)
-    if status == -1:
-        return jsonify({'status': 'Recognition failed', 'message': output})
-    else:
-        message = fetch_message(sound_id)
-        return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
+    try:
+        file_name = request.form['file_name']
+        file_path = os.path.join(TEST, file_name)
+
+        # Check if the file exists in the "test" folder
+        if not os.path.isfile(file_path):
+            message = 'File not found in the test folder.'
+            print(message)
+            return jsonify({'status': 'Recognition failed', 'message': message})
+
+        # Perform recognition against sounds in the "sounds" folder
+        status, sound_id, output = recognize(file_name, TEST)
+        if status == -1:
+            message = 'Analyzed sound does not match with stored sounds.'
+            print(message)
+            return jsonify({'status': 'Recognition failed', 'message': message})
+        else:
+            message = fetch_message(sound_id)
+            print(f"Match found: {message}")
+            return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
+
+    except Exception as e:
+        # Catch unexpected errors and log them for debugging
+        message = f'An error occurred: {str(e)}'
+        print(message)
+        return jsonify({'status': 'Error', 'message': message})
+
 
 @app.route('/record_audio', methods=['POST'])
 def record_audio_route():
     # Create a filename with a timestamp to avoid overwriting files
     filename = f"mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-    record_audio(filename)
-    return jsonify({'status': 'Recording complete', 'filename': filename})
+    file_path = os.path.join(TEST, filename)  # Use TEST to save in the "test" folder
+    record_audio(file_path)  # Pass the full path to record_audio
+    status, sound_id, output = recognize(filename, TEST)
+    if status == -1:
+        message = "Analyzed sound is not similar enough to stored sounds."
+        print(message)
+        play_text(message)
+        return jsonify({'status': 'Recognition failed', 'message': message})
+    else:
+        message = fetch_message(sound_id)
+        print(f"Match found: {message}")
+        play_text(message)
+        return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
+    
+
 
 def open_browser():
     """Function to open the default web browser after a slight delay."""

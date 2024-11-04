@@ -1,5 +1,6 @@
 import sounddevice as sd
 import soundfile as sf
+from config import TEST  # Import TEST path from config.py
 import os
 from datetime import datetime
 import pyttsx3
@@ -11,10 +12,9 @@ channels = 2  # Stereo
 def record_audio(filename, directory):
     print(f"Recording audio for {duration} seconds...")
 
-    # Record audio using "sounddevice"
+    # Record audio using sounddevice
     audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=channels, dtype='float64')
-    
-    sd.wait()  # Wait until recording is done
+    sd.wait()  # Wait until the recording is complete
     print("Recording complete.")
 
     # Full path to save the "".wav"
@@ -26,15 +26,13 @@ def record_audio(filename, directory):
 
 def play_text(text):
     engine = pyttsx3.init()
-
     engine.setProperty('rate', 150)
     engine.setProperty('volume', 1)
-
     engine.say(text)
-
     engine.runAndWait()
 
 if __name__ == "__main__":
-    # Create filename with a timestamp to avoid any overwriting files :)
-    filename = f"mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-    record_audio(filename)
+    # Test recording directly from sound_IO.py
+    filename = f"test_mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+    file_path = os.path.join(TEST, filename)
+    record_audio(file_path)

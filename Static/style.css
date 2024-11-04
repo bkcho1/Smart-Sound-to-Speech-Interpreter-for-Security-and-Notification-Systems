@@ -102,6 +102,46 @@ button:hover {
     padding: 20px;
 }
 
+/* Dropdown styling */
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    appearance: none; /* Remove default arrow */
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+/* Add custom arrow icon */
+select::after {
+    content: "▼";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #333;
+}
+
+/* Change border color on focus */
+select:focus {
+    border-color: #666;
+    outline: none;
+}
+
+/* Styling for option elements inside the dropdown */
+select option {
+    color: #333;
+    background-color: #f9f9f9;
+    padding: 10px;
+}
+
 label {
     font-weight: bold;
     margin-top: 10px;
