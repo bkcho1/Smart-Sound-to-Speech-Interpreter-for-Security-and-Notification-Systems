@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
-from sqlite.models import Base, Sound, Message, Fingerprint
+from sqlite.models import Base, Sound, Message, Fingerprint, Log
 from collections import defaultdict
 from datetime import datetime
 
@@ -14,6 +14,9 @@ Base.metadata.create_all(bind=engine)
 
 # Create a sessionmaker to interact with the database
 Session = sessionmaker(bind=engine)
+
+def get_session():
+    return Session()
     
 def insert(name, data, message):
     session = Session()
@@ -166,6 +169,7 @@ def insert_log(file_name, message):
         new_log = Log(file_name=file_name, message=message, timestamp=datetime.now())
         session.add(new_log)
         session.commit()
+        print("Log inserted successfully.")
     except Exception as e:
         session.rollback()
         print(f"Error inserting log: {e}")

@@ -125,41 +125,27 @@
 
                 const result = await response.json();
 
-                // Display the message and also use speech synthesis to speak the message
-                document.getElementById('recordingStatus').innerText = result.message;
-                
-                // Show an alert
-                alert(result.message);
-
-                // Speak the message out loud
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(result.message);
                     window.speechSynthesis.speak(utterance);
                 }
+
+                // Display the message and also use speech synthesis to speak the message
+                document.getElementById('recordingStatus').innerText = result.message;
+                
+
+
+                // Show an alert
+                alert(result.message);
+
+                // Speak the message out loud
+
             } catch (error) {
                 console.error('Error recording audio:', error);
                 document.getElementById('recordingStatus').innerText = 'Recording failed. Please try again.';
                 alert('Recording failed. Please try again.');
             }
         }
-
-<<<<<<< HEAD
-=======
-        async function stopRecording() {
-            document.getElementById('recordingStatus').innerText = "Recording stopped";
-            
-            const response = await fetch('/stop_record_audio', {
-                method: 'POST'
-            });
-        
-            const result = await response.json();
-            if (result.status === 'Recording stopped') {
-                document.getElementById('recordingStatus').innerText = `Recording stopped. File saved as ${result.filename}.`;
-            } else {
-                document.getElementById('recordingStatus').innerText = 'Failed to stop recording. Please try again.';
-            }
-        }
->>>>>>> 811b6b2a33df57c1b8c4aa33d4f523e38f6bfba1
 
         window.onload = () => {
             fetchEntries();
@@ -170,7 +156,7 @@
 <body>
     <div class="navbar">
         <a href="/">Home</a>
-        <a href="/logs">Logs</a>
+        <a href="/logs">History</a>
     </div>
 
     <div class="container">
@@ -212,7 +198,6 @@
             <h2>Record Audio</h2>
             <div style="display: flex; gap: 10px;">
                 <button type="button" onclick="recordAudio()">Record Audio</button>
-                <button type="button" onclick="stopRecording()">Stop Recording</button>
             </div>
             <p id="recordingStatus"></p>
         </form>
@@ -221,4 +206,358 @@
         <div id="log"></div>
     </div>
 </body>
-</html>
+</html> 
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Sound Interpreter</title>
+    <link rel="stylesheet" href="/static/style.css"> Link to CSS for styling -->
+    <!-- <script>
+        let availableFiles = []; // Holds the fetched files
+
+        async function fetchEntries() {
+            try {
+                const response = await fetch('/fetch');
+                const data = await response.json();
+                let logHtml = '<ul>';
+                data.forEach(entry => {
+                    logHtml += `<li><strong>ID:</strong> ${entry['ID']}, <strong>File:</strong> ${entry['File Name']}, <strong>Message:</strong> ${entry['Message']}</li>`;
+                });
+                logHtml += '</ul>';
+                document.getElementById('log').innerHTML = logHtml;
+            } catch (error) {
+                console.error('Error fetching entries:', error);
+            }
+        }
+
+        async function fetchTestFiles() {
+            try {
+                const response = await fetch('/fetch_test_files');
+                availableFiles = await response.json(); // Store available files
+
+                let fileOptions = '<option value="">Select a file</option>';
+                availableFiles.forEach(file => {
+                    fileOptions += `<option value="${file}">${file}</option>`;
+                });
+                document.getElementById('recognize_file_name').innerHTML = fileOptions;
+            } catch (error) {
+                console.error('Error fetching test files:', error);
+            }
+        }
+
+        async function insertEntry(fileName, message) {
+            if (!fileName || !message) {
+                alert('File name and message are required to insert an entry.');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file_name', fileName);
+            formData.append('message', message);
+            
+            try {
+                const response = await fetch('/insert', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const result = await response.json();
+                    console.error('Error during insert:', result);
+                    alert(`Error: ${result.message}`);
+                    return;
+                }
+
+                const result = await response.json();
+                alert(result.status);
+                fetchEntries(); // Refresh the list of entries
+            } catch (error) {
+                console.error('Insert request failed:', error);
+                alert('An error occurred while inserting the entry. Please try again.');
+            }
+        }
+
+        async function updateEntry(fileName, newMessage) {
+            if (!fileName || !newMessage) {
+                alert('File name and new message are required to update an entry.');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file_name', fileName);
+            formData.append('new_message', newMessage);
+
+            try {
+                const response = await fetch('/update', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    console.error('Error during update:', result);
+                    alert(`Error: ${result.message}`);
+                    return;
+                }
+
+                const result = await response.json();
+                alert(result.status);
+                fetchEntries();
+            } catch (error) {
+                console.error('Update request failed:', error);
+                alert('An error occurred while updating the entry. Please try again.');
+            }
+        }
+
+        async function deleteEntry(fileIdOrName) {
+            if (!fileIdOrName) {
+                alert('File ID or name is required to delete an entry.');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file_id_or_name', fileIdOrName);
+
+            try {
+                const response = await fetch('/delete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    console.error('Error during delete:', result);
+                    alert(`Error: ${result.message}`);
+                    return;
+                }
+
+                const result = await response.json();
+                alert(result.status);
+                fetchEntries();
+            } catch (error) {
+                console.error('Delete request failed:', error);
+                alert('An error occurred while deleting the entry. Please try again.');
+            }
+        }
+
+        async function recognizeSound(fileName) {
+            if (!fileName) {
+                alert("Please select a file to recognize.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file_name', fileName);
+
+            try {
+                const response = await fetch('/recognize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(result.message);
+                    window.speechSynthesis.speak(utterance);
+                }
+
+                alert(result.message);
+            } catch (error) {
+                console.error('Error during recognition:', error);
+                alert('An error occurred during recognition. Please try again.');
+            }
+        }
+
+        async function recordAudio() {
+            document.getElementById('recordingStatus').innerText = "Recording in progress...";
+
+            try {
+                const response = await fetch('/record_audio', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(result.message);
+                    window.speechSynthesis.speak(utterance);
+                }
+
+                document.getElementById('recordingStatus').innerText = result.message;
+                alert(result.message);
+            } catch (error) {
+                console.error('Error recording audio:', error);
+                document.getElementById('recordingStatus').innerText = 'Recording failed. Please try again.';
+                alert('Recording failed. Please try again.');
+            }
+        }
+
+        function startVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support speech recognition. Please try Chrome.');
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                document.getElementById('voiceCommandStatus').innerText = "Voice command enabled";
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                alert('Error during speech recognition. Please try again.');
+            };
+
+            recognition.onend = function() {
+                document.getElementById('voiceCommandStatus').innerText = "Voice command disabled";
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[event.resultIndex][0].transcript.trim().toLowerCase();
+                console.log('Voice command heard:', transcript);
+
+                handleVoiceCommand(transcript);
+            };
+
+            recognition.start();
+        }
+
+        function handleVoiceCommand(command) {
+            // Insert entry command
+            if (/insert (.+) with (.+)/.test(command)) {
+                const match = command.match(/insert (.+) with (.+)/);
+                if (match) {
+                    const fileName = match[1];
+                    const message = match[2];
+                    console.log(`Inserting entry: FileName=${fileName}, Message=${message}`);
+                    insertEntry(fileName, message);
+                }
+
+            // Update entry command
+            } else if (/update (.+) with new message (.+)/.test(command)) {
+                const match = command.match(/update (.+) with new message (.+)/);
+                if (match) {
+                    const fileName = match[1];
+                    const newMessage = match[2];
+                    console.log(`Updating entry: FileName=${fileName}, NewMessage=${newMessage}`);
+                    updateEntry(fileName, newMessage);
+                }
+
+            // Delete entry command
+            } else if (/delete (.+)/.test(command)) {
+                const match = command.match(/delete (.+)/);
+                if (match) {
+                    const fileIdOrName = match[1];
+                    console.log(`Deleting entry: FileIdOrName=${fileIdOrName}`);
+                    deleteEntry(fileIdOrName);
+                }
+
+            // Recognize sound command
+            } else if (command.includes("recognize sound")) {
+                listAvailableSounds();
+            } else if (command.startsWith("recognize")) {
+                const match = command.match(/recognize (.+)/);
+                if (match) {
+                    const fileName = match[1].trim();
+                    console.log(`Recognizing sound: FileName=${fileName}`);
+                    recognizeSound(fileName);
+                }
+
+            // Record audio command
+            } else if (command.includes("record audio")) {
+                console.log("Recording audio");
+                recordAudio();
+
+            } else {
+                console.log("Command not recognized:", command);
+            }
+        }
+
+        function listAvailableSounds() {
+            if (availableFiles.length > 0) {
+                const availableFilesString = availableFiles.join(", ");
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(`Available files are: ${availableFilesString}. Please say recognize followed by the file name.`);
+                    window.speechSynthesis.speak(utterance);
+                }
+            } else {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("No files are available for recognition.");
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+        }
+
+        window.onload = () => {
+            fetchEntries();
+            fetchTestFiles(); // Fetch files from "test" folder for recognition dropdown
+        };
+    </script> -->
+<!-- </head>
+<body>
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/logs">History</a>
+    </div>
+
+    <div class="container">
+        <h1>Admin Panel - Sound Interpreter</h1>
+        <button id="voiceCommandButton" onclick="startVoiceRecognition()">Enable Voice Command</button>
+        <p id="voiceCommandStatus">Voice command disabled</p>
+
+        <form>
+            <h2>Insert Entry</h2>
+            <label for="insert_file_name">File Name</label>
+            <input type="text" id="insert_file_name" placeholder="Enter file name">
+            <label for="insert_message">Message</label>
+            <input type="text" id="insert_message" placeholder="Enter message">
+            <button type="button" onclick="insertEntry(document.getElementById('insert_file_name').value, document.getElementById('insert_message').value)">Insert</button>
+        </form>
+
+        <form>
+            <h2>Update Entry</h2>
+            <label for="update_sound_id">Sound ID</label>
+            <input type="text" id="update_sound_id" placeholder="Enter sound ID">
+            <label for="update_message">New Message</label>
+            <input type="text" id="update_message" placeholder="Enter new message">
+            <button type="button" onclick="updateEntry(document.getElementById('update_sound_id').value, document.getElementById('update_message').value)">Update</button>
+        </form>
+
+        <form>
+            <h2>Delete Entry</h2>
+            <label for="delete_sound_id">Sound ID</label>
+            <input type="text" id="delete_sound_id" placeholder="Enter sound ID">
+            <button type="button" onclick="deleteEntry(document.getElementById('delete_sound_id').value)">Delete</button>
+        </form>
+
+        <form>
+            <h2>Recognize Sound</h2>
+            <label for="recognize_file_name">Select a file from the dropdown</label>
+            <select id="recognize_file_name"></select>
+            <button type="button" onclick="recognizeSound(document.getElementById('recognize_file_name').value)">Recognize</button>
+        </form>
+
+        <form>
+            <h2>Record Audio</h2>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="recordAudio()">Record Audio</button>
+            </div>
+            <p id="recordingStatus"></p>
+        </form>
+
+        <h2 style="padding: 10px; border-radius: 7px; text-align: center; background-color: black; color: white; max-width: 400px; margin-left: auto; margin-right: auto;">Log</h2>
+        <div id="log"></div>
+    </div>
+</body>
+</html> -->
+
+
+
+

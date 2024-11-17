@@ -1,31 +1,77 @@
-<!-- File: logs.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logs - Sound Interpreter</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script>
-        async function fetchLogs() {
-            const response = await fetch('/fetch_logs');
-            const logs = await response.json();
-            let logHtml = '<table><thead><tr><th>File Name</th><th>Message</th><th>Date and Time</th></tr></thead><tbody>';
-            logs.forEach(log => {
-                logHtml += `<tr><td>${log['File Name']}</td><td>${log['Message']}</td><td>${log['Timestamp']}</td></tr>`;
-            });
-            logHtml += '</tbody></table>';
-            document.getElementById('logs').innerHTML = logHtml;
-        }
-
-        window.onload = fetchLogs;
-    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Logs History</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Logs</h1>
-        <div id="logs"></div>
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/logs">History</a>
     </div>
+    <h1>Logs History</h1>
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Message</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Logs will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        function fetchLogs() {
+            fetch('/fetch_logs')
+                .then(response => response.json())
+                .then(logs => {
+                    const logsTable = document.getElementById('logsTable').getElementsByTagName('tbody')[0];
+                    logsTable.innerHTML = ''; // Clear existing rows before adding new ones
+
+                    logs.forEach(log => {
+                        const row = logsTable.insertRow();
+                        const fileNameCell = row.insertCell(0);
+                        const messageCell = row.insertCell(1);
+                        const timestampCell = row.insertCell(2);
+                        const actionCell = row.insertCell(3);
+
+                        fileNameCell.textContent = log['File Name'];
+                        messageCell.textContent = log['Message'];
+                        timestampCell.textContent = log['Timestamp'];
+
+                        // Create a button for each row to read out the message
+                        const readButton = document.createElement('button');
+                        readButton.textContent = 'Read Out';
+                        readButton.onclick = () => readOutMessage(log['Message'], log['Timestamp']);
+                        actionCell.appendChild(readButton);
+                    });
+                })
+                .catch(error => console.error('Error fetching logs:', error));
+        }
+
+        function readOutMessage(message, timestamp) {
+            if ('speechSynthesis' in window) {
+                // Convert the timestamp into a more readable format if necessary
+                const dateTime = new Date(timestamp);
+                const formattedDate = dateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+                const formattedTime = dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                const messageToSpeak = `${message} recognized on ${formattedDate} at ${formattedTime}`;
+
+                // Use Speech Synthesis API to speak the message
+                const utterance = new SpeechSynthesisUtterance(messageToSpeak);
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Speech synthesis is not supported in this browser.');
+            }
+        }
+
+        // Fetch logs when the document is loaded
+        document.addEventListener('DOMContentLoaded', fetchLogs);
+    </script>
 </body>
 </html>
