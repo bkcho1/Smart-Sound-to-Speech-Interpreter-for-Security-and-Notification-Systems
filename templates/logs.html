@@ -1,3 +1,5 @@
+<!-- File: logs.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,35 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logs - Sound Interpreter</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+        async function fetchLogs() {
+            const response = await fetch('/fetch_logs');
+            const logs = await response.json();
+            let logHtml = '<table><thead><tr><th>File Name</th><th>Message</th><th>Date and Time</th></tr></thead><tbody>';
+            logs.forEach(log => {
+                logHtml += `<tr><td>${log['File Name']}</td><td>${log['Message']}</td><td>${log['Timestamp']}</td></tr>`;
+            });
+            logHtml += '</tbody></table>';
+            document.getElementById('logs').innerHTML = logHtml;
+        }
+
+        window.onload = fetchLogs;
+    </script>
 </head>
 <body>
-    <div class="navbar">
-        <a href="/">Home</a>
-        <a href="/logs">Logs</a>
-    </div>
-
     <div class="container">
         <h1>Logs</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Serial Number</th>
-                    <th>File Name</th>
-                    <th>Message</th>
-                    <th>Date and Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in entries %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ entry['file_name'] }}</td>
-                    <td>{{ entry['message'] }}</td>
-                    <td>{{ entry['timestamp'] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div id="logs"></div>
     </div>
 </body>
 </html>

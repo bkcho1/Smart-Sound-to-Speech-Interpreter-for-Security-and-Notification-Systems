@@ -10,14 +10,27 @@
             const formData = new FormData();
             formData.append('file_name', document.getElementById('insert_file_name').value);
             formData.append('message', document.getElementById('insert_message').value);
-            const response = await fetch('/insert', {
-                method: 'POST',
-                body: formData
-            });
-            const result = await response.json();
-            alert(result.status);
-            fetchEntries();
+            
+            try {
+                const response = await fetch('/insert', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const result = await response.json();
+                    alert(`Error: ${result.message}`);
+                } else {
+                    const result = await response.json();
+                    alert(result.status);
+                    fetchEntries(); // Refresh the list of entries
+                }
+            } catch (error) {
+                console.error('Insert request failed:', error);
+                alert('An error occurred while inserting the entry. Please try again.');
+            }
         }
+
 
         async function fetchEntries() {
             const response = await fetch('/fetch');
@@ -81,41 +94,55 @@
                     body: formData
                 });
 
-                // Check if the response is okay
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
                 const result = await response.json();
 
-                // Speak the message out loud and show the alert simultaneously
-                if (result.status === 'Recognition successful' || result.status === 'Recognition failed') {
-                    if ('speechSynthesis' in window) {
-                        const utterance = new SpeechSynthesisUtterance(result.message);
-                        window.speechSynthesis.speak(utterance);
-                    }
-                    alert(result.message); // Show the alert after speech synthesis starts
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(result.message);
+                    window.speechSynthesis.speak(utterance);
                 }
+
+                alert(result.message);
             } catch (error) {
                 console.error('Error during recognition:', error);
                 alert('An error occurred during recognition. Please try again.');
             }
         }
 
+
         async function recordAudio() {
             document.getElementById('recordingStatus').innerText = "Recording in progress...";
 
-            const response = await fetch('/record_audio', {
-                method: 'POST'
-            });
+            try {
+                // Send a request to record the audio
+                const response = await fetch('/record_audio', {
+                    method: 'POST'
+                });
 
-            const result = await response.json();
-            if (result.status === 'Recording complete') {
-                document.getElementById('recordingStatus').innerText = `Recording complete. File saved as ${result.filename} in the test folder.`;
-            } else {
+                // Handle the response
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+
+                // Display the message and also use speech synthesis to speak the message
+                document.getElementById('recordingStatus').innerText = result.message;
+                
+                // Show an alert
+                alert(result.message);
+
+                // Speak the message out loud
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(result.message);
+                    window.speechSynthesis.speak(utterance);
+                }
+            } catch (error) {
+                console.error('Error recording audio:', error);
                 document.getElementById('recordingStatus').innerText = 'Recording failed. Please try again.';
+                alert('Recording failed. Please try again.');
             }
         }
+
 
         window.onload = () => {
             fetchEntries();

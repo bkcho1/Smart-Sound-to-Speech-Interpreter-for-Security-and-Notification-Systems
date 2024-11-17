@@ -1,5 +1,6 @@
 from sqlalchemy import *
 from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy import Column, Integer, String
 
 # boilerplate, needed for other classes
 class Base(DeclarativeBase):
@@ -39,3 +40,10 @@ class Fingerprint(Base):
     #     sound = Sound(file=sound_data)
     #     session.add(sound)
     #     session.commit()
+
+class Log(Base):
+    __tablename__ = 'logs'
+    id = Column(Integer, primary_key=True)
+    file_name = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    timestamp = Column(DateTime, nullable=False)

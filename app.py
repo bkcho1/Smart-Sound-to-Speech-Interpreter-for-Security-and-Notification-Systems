@@ -4,9 +4,10 @@ from flask import Flask, render_template, request, jsonify
 from sqlite.connect import insert, fetch_message, fetch_all, update, delete_sound
 from config import SOUNDS, TEST  # Import TEST for the "test" folder path
 from logic.file_utils import read
-from logic.sound_recognition import recognize
+from logic.sound_recognition import record_then_recognize, recognize
 from datetime import datetime
 from logic.sound_IO import record_audio, play_text   # Import the record_audio function
+from sqlite.models import Log
 import os
 
 app = Flask(__name__)
@@ -21,9 +22,18 @@ def home():
 def insert_entry():
     file_name = request.form['file_name']
     message = request.form['message']
+    
+    file_path = os.path.join(SOUNDS, file_name)
+    if not os.path.isfile(file_path):
+        return jsonify({'status': 'Error', 'message': 'File not found in the sounds folder'}), 400
+    
     data = read(file_name, SOUNDS)
+    if data is None:
+        return jsonify({'status': 'Error', 'message': 'Unable to read file data'}), 400
+    
     insert(file_name, data, message)
     return jsonify({'status': 'Entry inserted successfully'})
+
 
 @app.route('/fetch', methods=['GET'])
 def fetch_entries():
@@ -32,8 +42,13 @@ def fetch_entries():
 
 @app.route('/fetch_test_files', methods=['GET'])
 def fetch_test_files():
-    files = os.listdir(TEST)
-    return jsonify(files)
+    try:
+        files = os.listdir(TEST)
+        return jsonify(files)
+    except Exception as e:
+        print(f"Error fetching test files: {e}")
+        return jsonify([])
+
 
 
 @app.route('/update', methods=['POST'])
@@ -50,12 +65,13 @@ def delete_entry():
     return jsonify({'status': 'Entry deleted successfully'})
 
 @app.route('/recognize', methods=['POST'])
-def recognize_sound():
+def recognize_route():
     try:
         file_name = request.form['file_name']
-        file_path = os.path.join(TEST, file_name)
+        if not file_name:
+            return jsonify({'status': 'Error', 'message': 'No file selected for recognition.'})
 
-        # Check if the file exists in the "test" folder
+        file_path = os.path.join(TEST, file_name)
         if not os.path.isfile(file_path):
             message = 'File not found in the test folder.'
             print(message)
@@ -65,43 +81,101 @@ def recognize_sound():
         status, sound_id, output = recognize(file_name, TEST)
         if status == -1:
             message = 'Analyzed sound does not match with stored sounds.'
-            print(message)
             return jsonify({'status': 'Recognition failed', 'message': message})
         else:
             message = fetch_message(sound_id)
-            print(f"Match found: {message}")
             return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
-
     except Exception as e:
-        # Catch unexpected errors and log them for debugging
         message = f'An error occurred: {str(e)}'
-        print(message)
         return jsonify({'status': 'Error', 'message': message})
+
+    
+
+# # File: app.py new code for logs
+
+# @app.route('/recognize', methods=['POST'])
+# def recognize_sound():
+#     try:
+#         file_name = request.form['file_name']
+#         file_path = os.path.join(TEST, file_name)
+
+#         if not os.path.isfile(file_path):
+#             message = 'File not found in the test folder.'
+#             print(message)
+#             insert_log(file_name, message)  # Log the event
+#             return jsonify({'status': 'Recognition failed', 'message': message})
+
+#         status, sound_id, output = recognize(file_name, TEST)
+#         if status == -1:
+#             message = 'Analyzed sound does not match with stored sounds.'
+#             print(message)
+#             insert_log(file_name, message)  # Log the event
+#             return jsonify({'status': 'Recognition failed', 'message': message})
+#         else:
+#             message = fetch_message(sound_id)
+#             print(f"Match found: {message}")
+#             insert_log(file_name, message)  # Log the event
+#             return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
+#     except Exception as e:
+#         message = f'An error occurred: {str(e)}'
+#         print(message)
+#         insert_log('Unknown', message)  # Log the error
+#         return jsonify({'status': 'Error', 'message': message})
+
 
 
 @app.route('/record_audio', methods=['POST'])
 def record_audio_route():
-    # Create a filename with a timestamp to avoid overwriting files
-    filename = f"mic_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-    file_path = os.path.join(TEST, filename)  # Use TEST to save in the "test" folder
-    record_audio(file_path)  # Pass the full path to record_audio
-    status, sound_id, output = recognize(filename, TEST)
-    if status == -1:
-        message = "Analyzed sound is not similar enough to stored sounds."
+    try:
+        # Use the `record_then_recognize` function to record and recognize
+        status, sound_id, output = record_then_recognize(TEST)
+        if status == -1:
+            message = "Analyzed sound is not similar enough to stored sounds."
+        else:
+            message = fetch_message(sound_id)
+        
+        # # Log the recognition attempt
+        # insert_log(output if status != -1 else 'Unknown', message)
+
+        # # Print the message to logs
+        # print(message)
+
+        # Return the response to be used by the frontend
+        return jsonify({'status': 'Recognition successful' if status != -1 else 'Recognition failed', 'message': message})
+    except Exception as e:
+        message = f'An error occurred: {str(e)}'
         print(message)
-        play_text(message)
-        return jsonify({'status': 'Recognition failed', 'message': message})
-    else:
-        message = fetch_message(sound_id)
-        print(f"Match found: {message}")
-        play_text(message)
-        return jsonify({'status': 'Recognition successful', 'predicted_file': output, 'message': message})
+        return jsonify({'status': 'Error', 'message': message}), 500
+
+
+    
+
+# This code fetches the data to logs page
+@app.route('/fetch_logs', methods=['GET'])
+def fetch_logs():
+    session = Session()
+    try:
+        logs = session.query(Log).all()
+        log_data = []
+        for log in logs:
+            log_data.append({
+                'File Name': log.file_name,
+                'Message': log.message,
+                'Timestamp': log.timestamp.strftime('%A, %d %B %Y %H:%M:%S')
+            })
+        return jsonify(log_data)
+    except Exception as e:
+        print(f"Error fetching logs: {e}")
+        return jsonify([])
+    finally:
+        session.close()
+
     
 
 
 def open_browser():
     """Function to open the default web browser after a slight delay."""
-    webbrowser.open_new('http://127.0.0.1:5000/')
+    webbrowser.open_new('http://127.0.0.1:5000/') # Open the web browser at the URL of the Flask app
 
 if __name__ == "__main__":
     # Open the browser in a separate thread after a slight delay

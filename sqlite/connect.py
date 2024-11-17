@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 from sqlite.models import Base, Sound, Message, Fingerprint
 from collections import defaultdict
+from datetime import datetime
 
 from config import DATABASE_URI, DEV_MODE
 from logic.fingerprint import fingerprint
@@ -15,23 +16,25 @@ Base.metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine)
     
 def insert(name, data, message):
-    # Create a session
     session = Session()
-
     try:
-        # check if sound file already exists in database
-        if session.query(Sound).filter_by(file_name=name).first() is None:
-            new_sound = Sound(file_name=name,file=data)
+        existing_entry = session.query(Sound).filter_by(file_name=name).first()
+        if existing_entry is None:
+            print(f"Inserting new sound: {name}")
+            new_sound = Sound(file_name=name, file=data)
             session.add(new_sound)
             session.commit()
 
+            print(f"Adding message for sound ID: {new_sound.id}")
             new_message = Message(text=message, sound_id=new_sound.id)
             session.add(new_message)
             session.commit()
 
             hashes = []
             for i in range(data.ndim):
-                hashes += fingerprint(data[:,i])
+                hashes += fingerprint(data[:, i])
+
+            print(f"Adding fingerprints for sound ID: {new_sound.id}")
             for hash in hashes:
                 new_fingerprint = Fingerprint(hash=bytes.fromhex(hash[0]), sound_id=new_sound.id, offset=int(hash[1]))
                 session.add(new_fingerprint)
@@ -39,15 +42,15 @@ def insert(name, data, message):
                     session.commit()
                 except IntegrityError:
                     session.rollback()
-            print("Insertion successfully")
-            
+            print("Insertion successful")
         else:
-            print('Error: file already is in database')
+            print('Error: file already in database')
     except Exception as e:
         session.rollback()
         print(f"Error inserting data: {e}")
     finally:
         session.close()
+
 
 def fetch_message(sound_id):
     session = Session()
@@ -140,7 +143,7 @@ def match(hashes):
         countDict[match[0]] = countDict[match[0]] + 1
 
     print(matches)
-    input()
+#   input()
     session.close()
 
     return matches, countDict
@@ -155,3 +158,16 @@ def get_fingerprint_count(sound_id):
         session.close()
 
     return len(fingerprints)
+
+
+def insert_log(file_name, message):
+    session = Session()
+    try:
+        new_log = Log(file_name=file_name, message=message, timestamp=datetime.now())
+        session.add(new_log)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"Error inserting log: {e}")
+    finally:
+        session.close()
