@@ -143,6 +143,23 @@
             }
         }
 
+<<<<<<< HEAD
+=======
+        async function stopRecording() {
+            document.getElementById('recordingStatus').innerText = "Recording stopped";
+            
+            const response = await fetch('/stop_record_audio', {
+                method: 'POST'
+            });
+        
+            const result = await response.json();
+            if (result.status === 'Recording stopped') {
+                document.getElementById('recordingStatus').innerText = `Recording stopped. File saved as ${result.filename}.`;
+            } else {
+                document.getElementById('recordingStatus').innerText = 'Failed to stop recording. Please try again.';
+            }
+        }
+>>>>>>> 811b6b2a33df57c1b8c4aa33d4f523e38f6bfba1
 
         window.onload = () => {
             fetchEntries();
@@ -193,7 +210,10 @@
 
         <form>
             <h2>Record Audio</h2>
-            <button type="button" onclick="recordAudio()">Record Audio</button>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="recordAudio()">Record Audio</button>
+                <button type="button" onclick="stopRecording()">Stop Recording</button>
+            </div>
             <p id="recordingStatus"></p>
         </form>
 
