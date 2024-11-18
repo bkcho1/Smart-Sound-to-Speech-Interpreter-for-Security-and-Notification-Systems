@@ -1,4 +1,6 @@
 import threading
+import csv
+from datetime import datetime, timedelta
 import webbrowser
 from flask import Flask, render_template, request, jsonify
 from sqlite.connect import insert, fetch_message, fetch_all, update, delete_sound, insert_log, get_session
@@ -8,7 +10,6 @@ from logic.sound_recognition import record_then_recognize, recognize
 from datetime import datetime
 from logic.sound_IO import record_audio, play_text   # Import the record_audio function
 from sqlite.models import Log
-from sqlalchemy.orm import sessionmaker
 import os
 
 
@@ -175,6 +176,7 @@ def fetch_logs():
         logs = session.query(Log).all()
         log_data = [
             {
+                'id': log.id,
                 'File Name': log.file_name,
                 'Message': log.message,
                 'Timestamp': log.timestamp.strftime('%A, %d %B %Y %H:%M:%S')
@@ -189,7 +191,105 @@ def fetch_logs():
     finally:
         session.close()
 
+# @app.route('/delete_logs', methods=['POST'])
+# def delete_logs():
+#     try:
+
+#         print(f"Incoming delete request data: {request.data}")  # Debugging line
+
+#         data = request.get_json()
+#         log_ids = data.get('log_ids', [])
+
+#         print(f"Log IDs received for deletion: {log_ids}")  # Debugging line
+
+#         # Validate received log_ids and filter out any non-integer or 'undefined' values
+#         valid_log_ids = []
+#         for log_id in log_ids:
+#             try:
+#                 valid_log_ids.append(int(log_id))
+#             except ValueError:
+#                 print(f"Invalid log ID received: {log_id}")  # Log the invalid ID
+
+#         if not valid_log_ids:
+#             return jsonify({'status': 'Error', 'message': 'No valid log IDs provided'}), 400
+
+#         # Proceed with backup and deletion of valid log entries
+#         session = get_session()
+#         logs_to_delete = session.query(Log).filter(Log.id.in_(valid_log_ids)).all()
+
+#         # Backup to CSV
+#         backup_file_path = 'backup_logs.csv'
+#         file_exists = os.path.isfile(backup_file_path)
+
+#         with open(backup_file_path, mode='a', newline='') as csv_file:
+#             fieldnames = ['id', 'file_name', 'message', 'timestamp']
+#             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+#             if not file_exists:
+#                 writer.writeheader()
+
+#             for log in logs_to_delete:
+#                 writer.writerow({
+#                     'id': log.id,
+#                     'file_name': log.file_name,
+#                     'message': log.message,
+#                     'timestamp': log.timestamp.strftime('%A, %d %B %Y %H:%M:%S')
+#                 })
+
+#         # Delete logs from the database
+#         session.query(Log).filter(Log.id.in_(valid_log_ids)).delete(synchronize_session=False)
+#         session.commit()
+
+#         session.close()
+#         return jsonify({'status': 'Success', 'message': 'Selected logs backed up and deleted successfully'})
+
+#     except Exception as e:
+#         print(f"Error processing delete request: {e}")
+#         return jsonify({'status': 'Error', 'message': 'An error occurred while processing logs deletion'}), 500
+
     
+    
+# Function to schedule the backup and cleanup every 24 hours    
+# Backup and Cleanup Logic
+def backup_and_cleanup_old_logs():
+    session = get_session()
+    try:
+        # Calculate the date 15 days ago from today
+        cutoff_date = datetime.now() - timedelta(days=15)
+
+        # Query logs older than 15 days
+        old_logs = session.query(Log).filter(Log.timestamp < cutoff_date).all()
+
+        if old_logs:
+            # Write old logs to a backup CSV file
+            backup_file = 'logs_backup.csv'
+            with open(backup_file, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                # Write header if the file is empty
+                if file.tell() == 0:
+                    writer.writerow(['File Name', 'Message', 'Timestamp'])
+                # Write each old log to the CSV
+                for log in old_logs:
+                    writer.writerow([log.file_name, log.message, log.timestamp.strftime('%Y-%m-%d %H:%M:%S')])
+            
+            # Delete the old logs from the database
+            for log in old_logs:
+                session.delete(log)
+            session.commit()
+            print(f"Backed up and deleted {len(old_logs)} logs successfully.")
+        else:
+            print("No logs older than 15 days found for backup and deletion.")
+    except Exception as e:
+        print(f"Error during backup and cleanup: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+# Function to schedule the backup and cleanup every 24 hours
+def schedule_backup_and_cleanup():
+    backup_and_cleanup_old_logs()
+    # Schedule the next execution after 24 hours (86400 seconds)
+    threading.Timer(86400, schedule_backup_and_cleanup).start()
 
 
 def open_browser():
@@ -197,9 +297,11 @@ def open_browser():
     webbrowser.open('http://127.0.0.1:5000/') # Open the web browser at the URL of the Flask app
 
 if __name__ == "__main__":
-    # Open the browser in a separate thread after a slight delay
-    print("Starting Flask server and opening the web GUI...")
+    # Start the Flask server and open the web GUI
+    print("Starting Flask server and scheduling backup...")
     threading.Timer(1, open_browser).start()
+    # Schedule the first backup
+    schedule_backup_and_cleanup()
     # Run the Flask application
     app.run(debug=True, use_reloader=False, port=5000)
 
