@@ -19,11 +19,12 @@ def recognize(file_name, directory):
 
     matches, countDict = match(hashes)
 
-    if len(matches) == 0:
+    if len(matches) < 5:
         return -1, -1, "Analyzed sound is not similar enough to stored sounds"
 
     sound_id = max(zip(countDict.values(), countDict.keys()))[1]
     predicted_sound_file_name = get(sound_id)
+
 
     return 1, sound_id, predicted_sound_file_name
 
